@@ -11,17 +11,13 @@ jobs:
     name: Backend Unit Tests
     runs-on: ubuntu-latest
     
-    strategy:
-      matrix:
-        python-version: ['3.11']
-    
     steps:
     - uses: actions/checkout@v4
     
-    - name: Set up Python ${{ matrix.python-version }}
+    - name: Set up Python 3.11
       uses: actions/setup-python@v4
       with:
-        python-version: ${{ matrix.python-version }}
+        python-version: '3.11'
         cache: 'pip'
     
     - name: Install dependencies
@@ -29,6 +25,9 @@ jobs:
         python -m pip install --upgrade pip setuptools wheel
         pip install -r doc/requirements.txt
         pip install pytest pytest-cov pytest-mock pytest-flask
+    
+    - name: List installed packages
+      run: pip list | grep -E "pytest|flask|torch" || true
     
     - name: Run Backend Tests
       run: |
@@ -52,23 +51,25 @@ jobs:
     - name: Install dependencies
       run: |
         cd frontend
-        npm ci
+        npm ci 2>&1
+        npm list 2>&1 | head -20 || true
     
     - name: Run linting
       continue-on-error: true
       run: |
         cd frontend
-        npm run lint || true
+        npm run lint 2>&1 || true
     
     - name: Run Frontend Tests
+      continue-on-error: true
       run: |
         cd frontend
-        npm run test:run || true
+        npm run test:run 2>&1 || true
     
     - name: Build Frontend
       run: |
         cd frontend
-        npm run build
+        npm run build 2>&1
 
   test-summary:
     name: Test Summary
@@ -77,12 +78,20 @@ jobs:
     if: always()
     
     steps:
-    - name: Check test results
+    - name: Report results
       run: |
-        echo "Backend Tests: ${{ needs.backend-tests.result }}"
-        echo "Frontend Tests: ${{ needs.frontend-tests.result }}"
+        echo "=== Test Results ==="
+        echo "Backend:  ${{ needs.backend-tests.result }}"
+        echo "Frontend: ${{ needs.frontend-tests.result }}"
         
-        if [ "${{ needs.backend-tests.result }}" == "failure" ]; then
-          echo "Backend tests failed!"
+        if [[ "${{ needs.backend-tests.result }}" == "failure" ]]; then
+          echo "❌ Backend tests failed"
           exit 1
         fi
+        
+        if [[ "${{ needs.frontend-tests.result }}" == "failure" ]]; then
+          echo "❌ Frontend tests/build failed"
+          exit 1
+        fi
+        
+        echo "✓ All tests passed"

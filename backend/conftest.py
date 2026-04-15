@@ -5,23 +5,27 @@ Pytest configuration and fixtures for GowVision backend tests
 import os
 import sys
 import json
+from unittest.mock import MagicMock
+
+# CRITICAL: Mock heavy ML dependencies BEFORE any app imports
+# This must happen at module load time, before app.py is imported
+print("[pytest] Mocking ML dependencies...")
+sys.modules['torch'] = MagicMock()
+sys.modules['torch.nn'] = MagicMock()
+sys.modules['torchvision'] = MagicMock()
+sys.modules['torchvision.transforms'] = MagicMock()
+sys.modules['whisper'] = MagicMock()
+sys.modules['piper'] = MagicMock()
+sys.modules['piper.voice'] = MagicMock()
+sys.modules['piper.synthesize'] = MagicMock()
+sys.modules['piper.voice.PiperVoice'] = MagicMock()
+sys.modules['ollama'] = MagicMock()
+
+# NOW safe to import app
 import pytest
 import tempfile
 from pathlib import Path
 from datetime import datetime, date
-from unittest.mock import MagicMock
-
-# Mock heavy ML dependencies for CI/testing
-# This prevents need to install large packages like torch, whisper, piper-tts
-if os.getenv('CI') or 'pytest' in sys.modules:
-    sys.modules['torch'] = MagicMock()
-    sys.modules['torchvision'] = MagicMock()
-    sys.modules['torchvision.transforms'] = MagicMock()
-    sys.modules['whisper'] = MagicMock()
-    sys.modules['piper'] = MagicMock()
-    sys.modules['piper.synthesize'] = MagicMock()
-    sys.modules['ollama'] = MagicMock()
-
 from app import app, db
 from models import GovernmentScheme
 

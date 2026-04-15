@@ -11,7 +11,7 @@ from unittest.mock import MagicMock
 # Use direct assignment (not setdefault) to ensure they're set in CI
 os.environ['FLASK_ENV'] = 'testing'
 os.environ['FLASK_DEBUG'] = 'False'
-os.environ['SECRET_KEY'] = 'test-secret-key-for-ci-only'
+os.environ['SECRET_KEY'] = 'test-secret-key-for-ci-only-32chars!!'
 os.environ['CORS_ORIGINS'] = 'http://localhost:5173,http://localhost:5174'
 os.environ['DATABASE_URL'] = 'sqlite:///:memory:'
 

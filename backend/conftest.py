@@ -3,11 +3,25 @@ Pytest configuration and fixtures for GowVision backend tests
 """
 
 import os
+import sys
 import json
 import pytest
 import tempfile
 from pathlib import Path
 from datetime import datetime, date
+from unittest.mock import MagicMock
+
+# Mock heavy ML dependencies for CI/testing
+# This prevents need to install large packages like torch, whisper, piper-tts
+if os.getenv('CI') or 'pytest' in sys.modules:
+    sys.modules['torch'] = MagicMock()
+    sys.modules['torchvision'] = MagicMock()
+    sys.modules['torchvision.transforms'] = MagicMock()
+    sys.modules['whisper'] = MagicMock()
+    sys.modules['piper'] = MagicMock()
+    sys.modules['piper.synthesize'] = MagicMock()
+    sys.modules['ollama'] = MagicMock()
+
 from app import app, db
 from models import GovernmentScheme
 

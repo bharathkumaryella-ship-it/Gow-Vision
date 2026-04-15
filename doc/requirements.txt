@@ -1,0 +1,46 @@
+# Flask and API
+Flask>=3.0.0
+flask-cors>=4.0.0
+flask-jwt-extended>=4.6.0
+Flask-SQLAlchemy>=3.1.1
+Flask-Limiter>=3.5.0
+
+# Scheduling
+APScheduler>=3.10.0
+
+# Machine Learning
+torch>=2.0.0
+torchvision>=0.15.0
+
+# Audio Processing - Speech to Text
+openai-whisper>=20231114
+
+# Image Processing
+Pillow>=10.4.0
+
+# Data Processing
+numpy>=2.0.0
+pandas>=2.2.0
+scikit-learn>=1.5.0
+
+# Text-to-Speech - Multilingual (100+ languages)
+piper-tts>=1.2.0
+
+# Utilities
+tqdm>=4.66.1
+requests>=2.32.0
+python-dotenv>=1.0.0
+ollama>=0.3.3
+
+# Optional but recommended
+matplotlib>=3.9.0
+seaborn>=0.13.2
+
+# Security & Validation
+phonenumbers>=8.13.0
+
+# Testing
+pytest>=7.4.0
+pytest-cov>=4.1.0
+pytest-flask>=1.3.0
+pytest-mock>=3.11.0

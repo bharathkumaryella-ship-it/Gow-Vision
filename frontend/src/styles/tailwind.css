@@ -1,0 +1,23 @@
+@import 'tailwindcss' source(none);
+@source '../**/*.{js,ts,jsx,tsx}';
+
+/* Safelist for scheme colors to ensure Tailwind includes them */
+@layer utilities {
+  .bg-emerald-500 { @apply bg-emerald-500; }
+  .bg-blue-500 { @apply bg-blue-500; }
+  .bg-blue-600 { @apply bg-blue-600; }
+  .bg-amber-500 { @apply bg-amber-500; }
+  .bg-amber-600 { @apply bg-amber-600; }
+  .bg-red-500 { @apply bg-red-500; }
+  .bg-orange-500 { @apply bg-orange-500; }
+  .bg-orange-600 { @apply bg-orange-600; }
+  .bg-green-500 { @apply bg-green-500; }
+  .bg-green-600 { @apply bg-green-600; }
+  .bg-purple-600 { @apply bg-purple-600; }
+  .bg-cyan-500 { @apply bg-cyan-500; }
+  .bg-cyan-600 { @apply bg-cyan-600; }
+  .bg-teal-500 { @apply bg-teal-500; }
+  .bg-yellow-500 { @apply bg-yellow-500; }
+}
+
+@import 'tw-animate-css';

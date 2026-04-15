@@ -1,0 +1,48 @@
+@startuml ClassDiagram
+!theme plain
+skinparam shadowing false
+
+class User {
+  - userId: string
+  - name: string
+  - location: string
+}
+
+class BreedDetector {
+  - modelPath: string
+  + detectBreed(image): Result
+  + processImage(file): Image
+}
+
+class HealthAnalyzer {
+  - symptoms: List
+  + analyzeSymptoms(input): Diagnosis
+  + generateReport(): Report
+}
+
+class EarTagManager {
+  - tagDatabase: Database
+  + searchTag(tagId): AnimalInfo
+  + registerTag(data): Result
+}
+
+class GovernmentScheme {
+  - schemeId: string
+  - name: string
+  - description: string
+  - eligibility: string
+}
+
+class SchemeRepository {
+  - schemes: List<GovernmentScheme>
+  + getAllSchemes(): List
+  + filterSchemes(criteria): List
+}
+
+User --> BreedDetector
+User --> HealthAnalyzer
+User --> EarTagManager
+User --> SchemeRepository
+SchemeRepository *-- GovernmentScheme
+
+@enduml

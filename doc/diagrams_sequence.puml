@@ -1,0 +1,72 @@
+@startuml Sequence
+!theme plain
+skinparam shadowing false
+
+actor Farmer as F
+participant Frontend as FE
+participant Backend as BE
+participant MLModel as ML
+database Database as DB
+
+== BREED DETECTION FLOW ==
+F -> FE: 1. Upload Cattle Image
+activate FE
+FE -> BE: POST /api/detect-breed
+activate BE
+BE -> ML: Load Model & Process Image
+activate ML
+ML --> BE: Breed Prediction + Confidence
+deactivate ML
+BE -> DB: Save Prediction
+activate DB
+DB --> BE: Confirmed
+deactivate DB
+BE --> FE: Return Breed Result
+deactivate BE
+FE --> F: Display Breed & Info
+deactivate FE
+
+== HEALTH ANALYSIS FLOW ==
+F -> FE: 2. Select Symptoms
+activate FE
+FE -> BE: POST /api/health-analysis
+activate BE
+BE -> BE: Analyze Symptoms Pattern
+BE -> DB: Check Livestock Database
+activate DB
+DB --> BE: Historical Data
+deactivate DB
+BE --> FE: Health Diagnosis & Treatment
+deactivate BE
+FE --> F: Display Health Report
+deactivate FE
+
+== EAR TAG SEARCH FLOW ==
+F -> FE: 3. Enter Ear Tag ID
+activate FE
+FE -> BE: GET /api/ear-tags/{tagId}
+activate BE
+BE -> DB: Query Tag Database
+activate DB
+DB --> BE: Animal Records & History
+deactivate DB
+BE --> FE: Animal Info & Vaccination
+deactivate BE
+FE --> F: Display Animal Details
+deactivate FE
+
+== GOVERNMENT SCHEMES FLOW ==
+F -> FE: 4. View Schemes
+activate FE
+FE -> BE: GET /api/government-schemes
+activate BE
+BE -> DB: Fetch All Schemes
+activate DB
+DB --> BE: Scheme List with Details
+deactivate DB
+BE --> FE: Filtered Schemes
+deactivate BE
+FE --> F: Display Available Schemes
+deactivate FE
+
+@enduml

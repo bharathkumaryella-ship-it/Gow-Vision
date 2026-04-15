@@ -1,0 +1,80 @@
+@startuml Activity
+!theme plain
+skinparam shadowing false
+
+start
+:User Opens GowConnect App;
+
+if (User Selects Feature?) then (Breed Detection)
+  :Upload Cattle Image;
+  :Validate Image Format & Size;
+  
+  if (Image Valid?) then (YES)
+    :Process Image;
+    :Load ML Model;
+    :Predict Cattle Breed;
+    :Get Confidence Score;
+    
+    if (Confidence > 75%?) then (YES)
+      :Save Result to Database;
+      :Display Breed Info;
+    else (NO)
+      :Request More Images;
+    endif
+  else (NO)
+    :Return Error Message;
+  endif
+
+else (Health Analysis)
+  :Select Animal Symptoms;
+  :Input Disease History;
+  :Validate Input Data;
+  
+  if (Valid Symptoms?) then (YES)
+    :Analyze Symptom Pattern;
+    :Query Database History;
+    :Generate Diagnosis;
+    :Suggest Treatment Plan;
+    :Save Analysis Results;
+    :Display Health Report;
+  else (NO)
+    :Show Error & Retry;
+  endif
+
+else (Ear Tag Search)
+  :Enter Ear Tag ID;
+  :Validate Tag Format;
+  
+  if (Tag Format Valid?) then (YES)
+    :Search Database;
+    
+    if (Tag Found?) then (YES)
+      :Retrieve Animal Records;
+      :Get Vaccination History;
+      :Display Animal Details;
+    else (NO)
+      :Show "Tag Not Found";
+    endif
+  else (NO)
+    :Return Format Error;
+  endif
+
+else (View Schemes)
+  :Load Government Schemes;
+  :Filter by Criteria;
+  
+  if (Filters Applied?) then (YES)
+    :Query Schemes Database;
+    :Apply Eligibility Check;
+    :Display Relevant Schemes;
+  else (NO)
+    :Display All Schemes;
+  endif
+
+endif
+
+:Save User Activity Log;
+:Return to Home Screen;
+stop
+
+@enduml

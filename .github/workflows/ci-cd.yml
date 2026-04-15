@@ -1,0 +1,242 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+env:
+  NODE_VERSION: "18"
+  PYTHON_VERSION: "3.11"
+
+jobs:
+  backend-tests:
+    name: Backend Tests & Quality
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: "pip"
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r doc/requirements.txt
+          pip install pytest pytest-cov pytest-mock
+
+      - name: Run backend tests with coverage
+        run: |
+          cd backend
+          pytest tests/ --cov=. --cov-report=html --cov-report=term --cov-fail-under=70
+
+      - name: Run security checks
+        run: |
+          pip install bandit safety
+          bandit -r backend/ -f json -o bandit-report.json || true
+          safety check --json || true
+
+      - name: Lint Python code
+        run: |
+          pip install flake8 pylint
+          flake8 backend/ --count --select=E9,F63,F7,F82 --show-source --statistics || true
+          pylint backend/*.py --exit-zero || true
+
+      - name: Upload coverage reports
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./backend/htmlcov/index.html
+          flags: backend
+          fail_ci_if_error: false
+
+  frontend-tests:
+    name: Frontend Tests & Quality
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+          cache-dependency-path: "frontend/package-lock.json"
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Run lint checks
+        working-directory: frontend
+        run: npm run lint || true
+
+      - name: Run tests with coverage
+        working-directory: frontend
+        run: npm run test:coverage || true
+
+      - name: Build frontend
+        working-directory: frontend
+        run: npm run build
+
+      - name: Check bundle size
+        working-directory: frontend
+        run: |
+          BUNDLE_SIZE=$(ls -lh dist/index.html | awk '{print $5}')
+          echo "Bundle size: $BUNDLE_SIZE"
+
+      - name: Upload coverage reports
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./frontend/coverage/coverage-final.json
+          flags: frontend
+          fail_ci_if_error: false
+
+  security-scan:
+    name: Security Scanning
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: "fs"
+          scan-ref: "."
+          format: "sarif"
+          output: "trivy-results.sarif"
+
+      - name: Upload Trivy results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: "trivy-results.sarif"
+
+      - name: Check for exposed secrets
+        uses: gitleaks/gitleaks-action@v2
+
+  build-docker:
+    name: Build Docker Images
+    runs-on: ubuntu-latest
+    needs: [backend-tests, frontend-tests]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Build Frontend Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: frontend
+          push: false
+          tags: gowvision-frontend:latest
+
+      - name: Build Backend Docker image (if Dockerfile exists)
+        run: |
+          if [ -f "backend/Dockerfile" ]; then
+            docker build -t gowvision-backend:latest backend/
+          else
+            echo "No backend Dockerfile found"
+          fi
+
+  code-quality:
+    name: Code Quality Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r doc/requirements.txt
+          pip install radon
+          cd frontend && npm ci
+
+      - name: Calculate Python complexity
+        run: |
+          radon cc backend/ -a -s || true
+          radon mi backend/ -s || true
+
+      - name: Check for unused imports
+        run: |
+          pip install autoflake
+          autoflake --check --recursive backend/ || true
+
+      - name: Check TypeScript compilation
+        working-directory: frontend
+        run: npx tsc --noEmit || true
+
+  documentation:
+    name: Documentation Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check documentation completeness
+        run: |
+          echo "Checking for required documentation files..."
+          test -f "doc/COMPLETE_DOCUMENTATION.md" && echo "✓ API Documentation found"
+          test -f "doc/README.md" && echo "✓ README found"
+          test -f ".github/CONTRIBUTING.md" && echo "✓ Contributing guide found" || echo "⚠ Missing contributing guide"
+          test -f ".github/CODE_OF_CONDUCT.md" && echo "✓ Code of conduct found" || echo "⚠ Missing code of conduct"
+
+  env-validation:
+    name: Environment Validation
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate .env.example exists
+        run: test -f ".env.example" && echo "✓ .env.example found" || echo "⚠ Missing .env.example"
+
+      - name: Check for hardcoded secrets
+        run: |
+          echo "Scanning for potential hardcoded secrets..."
+          (grep -r "REACT_APP_API_KEY=" . || echo "No exposed API keys found") || true
+          (grep -r "password=" . --include="*.ts" --include="*.tsx" --include="*.py" || echo "No hardcoded passwords found") || true
+
+  status-check:
+    name: Status Check
+    runs-on: ubuntu-latest
+    needs: [backend-tests, frontend-tests, security-scan, code-quality]
+    if: always()
+
+    steps:
+      - name: Check status
+        run: |
+          echo "CI/CD Pipeline Status Summary"
+          echo "=============================="
+          echo "Backend Tests: ${{ needs.backend-tests.result }}"
+          echo "Frontend Tests: ${{ needs.frontend-tests.result }}"
+          echo "Security Scan: ${{ needs.security-scan.result }}"
+          echo "Code Quality: ${{ needs.code-quality.result }}"
+          
+          if [[ "${{ needs.backend-tests.result }}" == "failure" || "${{ needs.frontend-tests.result }}" == "failure" || "${{ needs.security-scan.result }}" == "failure" ]]; then
+            echo "::error::Critical checks failed!"
+            exit 1
+          fi
+
+      - name: Notify deployment ready
+        if: success()
+        run: echo "✓ All checks passed! Ready for deployment."

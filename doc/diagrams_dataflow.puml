@@ -1,0 +1,34 @@
+@startuml DataFlow
+!theme plain
+skinparam shadowing false
+
+rectangle "1.0 User Interface" {
+  component UI [User Interface]
+}
+
+rectangle "2.0 Processing" {
+  component Validator [Input Validator]
+  component Processor [Data Processor]
+}
+
+rectangle "3.0 ML Layer" {
+  component Model [ML Model]
+}
+
+rectangle "4.0 Storage" {
+  database DB [Database]
+}
+
+rectangle "5.0 Output" {
+  component Formatter [Result Formatter]
+}
+
+UI --> Validator: Image/Input
+Validator --> Processor: Validated Data
+Processor --> Model: Features
+Model --> Formatter: Predictions
+Formatter --> DB: Save
+Formatter --> UI: Display
+DB --> UI: Retrieve
+
+@enduml

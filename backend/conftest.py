@@ -7,6 +7,13 @@ import sys
 import json
 from unittest.mock import MagicMock
 
+# Set test environment variables FIRST (before any imports)
+os.environ.setdefault('FLASK_ENV', 'testing')
+os.environ.setdefault('FLASK_DEBUG', 'False')
+os.environ.setdefault('SECRET_KEY', 'test-secret-key-for-ci')
+os.environ.setdefault('CORS_ORIGINS', 'http://localhost:5173')
+os.environ.setdefault('DATABASE_URL', 'sqlite:///:memory:')
+
 # CRITICAL: Mock heavy ML dependencies BEFORE any app imports
 # This must happen at module load time, before app.py is imported
 print("[pytest] Mocking ML dependencies...")

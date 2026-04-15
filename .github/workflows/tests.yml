@@ -53,7 +53,7 @@ jobs:
     - name: Install dependencies
       run: |
         cd frontend
-        npm ci 2>&1
+        npm ci --legacy-peer-deps 2>&1
         npm list 2>&1 | head -20 || true
     
     - name: Run linting

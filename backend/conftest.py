@@ -8,11 +8,12 @@ import json
 from unittest.mock import MagicMock
 
 # Set test environment variables FIRST (before any imports)
-os.environ.setdefault('FLASK_ENV', 'testing')
-os.environ.setdefault('FLASK_DEBUG', 'False')
-os.environ.setdefault('SECRET_KEY', 'test-secret-key-for-ci')
-os.environ.setdefault('CORS_ORIGINS', 'http://localhost:5173')
-os.environ.setdefault('DATABASE_URL', 'sqlite:///:memory:')
+# Use direct assignment (not setdefault) to ensure they're set in CI
+os.environ['FLASK_ENV'] = 'testing'
+os.environ['FLASK_DEBUG'] = 'False'
+os.environ['SECRET_KEY'] = 'test-secret-key-for-ci-only'
+os.environ['CORS_ORIGINS'] = 'http://localhost:5173,http://localhost:5174'
+os.environ['DATABASE_URL'] = 'sqlite:///:memory:'
 
 # CRITICAL: Mock heavy ML dependencies BEFORE any app imports
 # This must happen at module load time, before app.py is imported
